@@ -1317,10 +1317,17 @@ struct ProductRowEditor: View {
             }
         }
         .alert(isPresented: $showDeleteAlert) {
+            // When deleting a product we defer the actual removal until the next
+            // run loop. Directly mutating the products array inside a `ForEach`
+            // that is iterating over bindings can cause a simultaneous access
+            // violation. Dispatching the deletion to the main queue avoids
+            // modifying the collection during iteration.
             Alert(title: Text("商品を削除しますか？"),
                   message: Text("この商品を削除します。"),
                   primaryButton: .destructive(Text("削除")) {
-                      onDelete()
+                      DispatchQueue.main.async {
+                          onDelete()
+                      }
                   },
                   secondaryButton: .cancel())
         }
